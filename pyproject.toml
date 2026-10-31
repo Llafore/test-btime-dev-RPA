@@ -11,3 +11,6 @@ dependencies = ["tzdata; sys_platform == 'win32'"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+"weather_rpa.schemas" = ["*.json"]
