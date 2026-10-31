@@ -121,11 +121,6 @@ explicitamente. Uma cidade incompleta ou inválida impede a publicação da cole
 
 ## Artefatos e arquitetura
 
-Os [CSVs reais de exemplo](output/README.md) são versionados, com nome, UF,
-coordenadas, fuso, data prevista, mínima, máxima, precipitação, fonte e instante da
-coleta. `location_id` é somente interno. Ausência de precipitação vira campo vazio;
-zero significa zero informado. `collected_at` está em UTC; `forecast_date` é a data local.
-
 O exportador grava um temporário, relê e valida o contrato, e só então substitui o
 destino. O descriptor empacotado usa um subconjunto de Table Schema; o validador é
 específico do projeto, sem implementar a especificação completa.
