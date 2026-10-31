@@ -6,8 +6,9 @@ contrato do desafio; referências externas são usadas apenas para estudo concei
 
 ## Estado desta etapa
 
-O primeiro PR contém somente domínio, contrato dos dados e testes unitários.
-Ainda não há coletores, CLI, exportação ou validação de CSV implementados.
+Estão implementados o domínio, a exportação CSV e a validação do artefato relido
+do disco, com contrato tabular versionado e testes unitários.
+Ainda não há coletores, CLI ou caso de uso de coleta implementados.
 Não é necessário acesso à internet para executar os testes.
 
 ## Ambiente
@@ -54,12 +55,29 @@ canceladas quando uma nova execução começa.
 O workflow publica o resultado das verificações. Torná-las obrigatórias para
 merge depende da configuração de proteção da branch no GitHub.
 
+## Exportação e validação de CSV
+
+`CsvForecastExporter.export(forecasts, destination)` recebe um iterável de
+`DailyForecast`, grava UTF-8 com cabeçalho e retorna o total de registros. O diretório
+pai deve existir. A exportação relê e valida um arquivo temporário no mesmo diretório
+antes de substituir o destino. Falhas de entrada, validação ou publicação preservam
+um arquivo anterior e removem o temporário.
+
+`CsvArtifactValidator.validate(path)` também pode validar um CSV já existente.
+Conteúdo inválido gera `ArtifactValidationError`; erros de acesso continuam sendo
+`OSError`. Arquivo vazio, somente cabeçalho e duplicidades são rejeitados.
+
+O schema empacotado em `src/weather_rpa/schemas/daily_forecast.schema.json` usa um
+subconjunto de [Table Schema](https://specs.frictionlessdata.io/table-schema/).
+O validador é específico deste contrato, não implementa a especificação completa.
+Confira o [contrato e exemplo de uso](docs/data-contract.md).
+
 ## Decisões
 
 - O domínio usa modelos imutáveis e não conhece HTTP, HTML ou CSV.
 - `Location` é um objeto de valor, sem cadastro ou persistência separada.
 - `location_id` serve à correlação interna, inclusive em execuções com várias cidades.
-- O CSV exportará nome, UF, coordenadas e fuso; não exportará `location_id` e não
+- O CSV exporta nome, UF, coordenadas e fuso; não exporta `location_id` e não
   dependerá de um cadastro externo para identificar a localidade.
 - `collected_at` deve ter fuso e é normalizado para UTC.
 - `forecast_date` representa o dia civil no fuso IANA da localidade.
@@ -73,11 +91,10 @@ A escolha do Climatempo não confirma autorização de redistribuição de seus 
 
 ## Próximos PRs
 
-1. Exportação CSV e validação do artefato contra contrato versionado.
-2. Portas e caso de uso compartilhado.
-3. Adaptador Open-Meteo.
-4. Adaptador Climatempo, começando com HTTP e BeautifulSoup.
-5. CLI, handlers e exemplos reais de saída.
+1. Portas e caso de uso compartilhado.
+2. Adaptador Open-Meteo.
+3. Adaptador Climatempo, começando com HTTP e BeautifulSoup.
+4. CLI, handlers e exemplos reais de saída.
 
 Cada etapa inclui testes determinísticos. Transporte, seletores e interpretação
 do HTML serão separados. Verificações online serão independentes da suíte unitária.

@@ -1,0 +1,104 @@
+{
+  "title": "Daily forecast CSV",
+  "x-contract-version": 1,
+  "fields": [
+    {
+      "name": "location_name",
+      "type": "string",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "constraints": {
+        "required": true,
+        "pattern": "[A-Z]{2}"
+      }
+    },
+    {
+      "name": "latitude",
+      "type": "number",
+      "constraints": {
+        "required": true,
+        "minimum": -90,
+        "maximum": 90
+      }
+    },
+    {
+      "name": "longitude",
+      "type": "number",
+      "constraints": {
+        "required": true,
+        "minimum": -180,
+        "maximum": 180
+      }
+    },
+    {
+      "name": "forecast_date",
+      "type": "date",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "timezone",
+      "type": "string",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "temperature_min_c",
+      "type": "number",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "temperature_max_c",
+      "type": "number",
+      "constraints": {
+        "required": true
+      }
+    },
+    {
+      "name": "precipitation_mm",
+      "type": "number",
+      "constraints": {
+        "minimum": 0
+      }
+    },
+    {
+      "name": "source",
+      "type": "string",
+      "constraints": {
+        "required": true,
+        "enum": [
+          "open_meteo",
+          "climatempo"
+        ]
+      }
+    },
+    {
+      "name": "collected_at",
+      "type": "datetime",
+      "constraints": {
+        "required": true
+      }
+    }
+  ],
+  "missingValues": [
+    ""
+  ],
+  "primaryKey": [
+    "location_name",
+    "state",
+    "latitude",
+    "longitude",
+    "timezone",
+    "forecast_date",
+    "source"
+  ]
+}
