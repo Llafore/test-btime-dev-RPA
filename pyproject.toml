@@ -7,7 +7,10 @@ name = "weather-rpa"
 version = "0.1.0"
 description = "Coleta meteorológica, scraping x api"
 requires-python = ">=3.11"
-dependencies = ["tzdata; sys_platform == 'win32'"]
+dependencies = [
+    "tzdata; sys_platform == 'win32'",
+    "beautifulsoup4>=4.12,<5",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

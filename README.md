@@ -9,8 +9,8 @@ contrato do desafio; referências externas são usadas apenas para estudo concei
 Estão implementados o domínio, a exportação CSV e a validação do artefato relido
 do disco, com contrato tabular versionado e testes unitários. Também estão disponíveis
 as portas e o caso de uso compartilhado para múltiplas localidades e período explícito.
-O coletor Open-Meteo está implementado. O coletor de scraping e a CLI ainda estão
-pendentes.
+Os coletores Open-Meteo e Climatempo estão implementados. A CLI e os handlers
+ainda estão pendentes.
 Não é necessário acesso à internet para executar os testes.
 
 ## Ambiente
@@ -95,6 +95,16 @@ Dados por [Open-Meteo](https://open-meteo.com/), sob CC BY 4.0, normalizados par
 contrato deste projeto. Consulte os [termos](https://open-meteo.com/en/terms) antes
 de usar o serviço em outros contextos.
 
+## Scraping Climatempo
+
+O adaptador usa HTTP e BeautifulSoup na página de 15 dias, com seletores separados
+da extração e normalização. Cruza as datas completas do calendário com os cards
+diários e confere cidade e UF antes de aceitar os valores. Não usa dados horários
+ou probabilidade de chuva como acumulado diário.
+
+Veja [configuração, uso e limitações](docs/climatempo.md). Os testes usam HTML
+sintético local, sem depender da disponibilidade ou do layout atual do site.
+
 ## Decisões
 
 - O domínio usa modelos imutáveis e não conhece HTTP, HTML ou CSV.
@@ -114,8 +124,7 @@ A escolha do Climatempo não confirma autorização de redistribuição de seus 
 
 ## Próximos PRs
 
-1. Adaptador Climatempo, começando com HTTP e BeautifulSoup.
-2. CLI, handlers e exemplos reais de saída.
+1. CLI, handlers e exemplos reais de saída.
 
 Cada etapa inclui testes determinísticos. Transporte, seletores e interpretação
 do HTML serão separados. Verificações online serão independentes da suíte unitária.
