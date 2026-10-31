@@ -12,8 +12,14 @@ dependencies = [
     "beautifulsoup4>=4.12,<5",
 ]
 
+[project.scripts]
+weather-rpa = "weather_rpa.cli:main"
+weather-api = "weather_rpa.cli:api_main"
+weather-scraping = "weather_rpa.cli:scraping_main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
 "weather_rpa.schemas" = ["*.json"]
+"weather_rpa.config" = ["*.json"]

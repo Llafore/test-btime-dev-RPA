@@ -1,130 +1,163 @@
 # Weather RPA — desafio btime
 
-Projeto Python para coleta meteorológica via API Open-Meteo e scraping do
-Climatempo, com arquitetura hexagonal. Implementação original a partir do
-contrato do desafio; referências externas são usadas apenas para estudo conceitual.
+Dois scripts Python coletam previsão diária de clima: API pública Open-Meteo e
+web scraping do Climatempo com HTTP e BeautifulSoup. Ambos usam o mesmo caso de
+uso e geram CSVs com o mesmo contrato, validados antes da publicação.
 
-## Estado desta etapa
+## Instalação
 
-Estão implementados o domínio, a exportação CSV e a validação do artefato relido
-do disco, com contrato tabular versionado e testes unitários. Também estão disponíveis
-as portas e o caso de uso compartilhado para múltiplas localidades e período explícito.
-Os coletores Open-Meteo e Climatempo estão implementados. A CLI e os handlers
-ainda estão pendentes.
-Não é necessário acesso à internet para executar os testes.
-
-## Ambiente
-
-Python 3.11 ou superior. No Linux, é necessária a base de fusos IANA do sistema.
-No Windows, a instalação do projeto inclui `tzdata` para disponibilizar essa base.
-
-Instalação em ambiente virtual:
+Python 3.11 ou superior. Execute os comandos a partir da raiz do repositório.
 
 ```bash
-python -m venv .venv
-# Linux: source .venv/bin/activate
-# PowerShell: .venv\Scripts\Activate.ps1
-python -m pip install -e .
-python -m unittest discover -s tests -v
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install .
 ```
 
-Também é possível executar os testes sem instalar o projeto, com `src` no caminho
- de importação (e a base de fusos já disponível):
-
-```bash
-# Linux / WSL
-PYTHONPATH=src python3 -m unittest discover -s tests -v
-```
+No Windows/PowerShell:
 
 ```powershell
-# PowerShell
-$env:PYTHONPATH = 'src'
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install .
+```
+
+Não há chave de API ou navegador obrigatório. A instalação requer internet para
+obter dependências; as coletas reais também requerem internet. Linux precisa da
+base IANA de fusos do sistema; no Windows, o pacote instala `tzdata`.
+Para desenvolvimento, use `python -m pip install -e .`.
+
+## Execução
+
+Por padrão, coleta **hoje em São Paulo**, no fuso `America/Sao_Paulo`:
+
+```bash
+python main.py --api
+python main.py --scraping
+```
+
+Os dois scripts independentes também atendem à entrega do desafio:
+
+```bash
+python collect_api.py
+python collect_scraping.py
+```
+
+Alternativas após instalar o pacote:
+
+```bash
+python -m weather_rpa --api
+weather-rpa --scraping
+weather-api
+weather-scraping
+```
+
+Os modos `--api` e `--scraping` são mutuamente exclusivos. Os scripts específicos
+já selecionam o modo, aceitando os demais argumentos diretamente.
+
+Para um período explícito, incluindo as duas datas:
+
+```bash
+python main.py --api --start-date 2026-10-31 --end-date 2026-11-02 --output output/api_periodo.csv
+python collect_scraping.py --start-date 2026-10-31 --end-date 2026-11-02 --output output/scraping_periodo.csv
+```
+
+Substitua as datas por um período coberto atualmente pelas fontes. Omitir `--end-date`
+seleciona somente o dia inicial; fornecer apenas a data final é erro. Não há fallback
+para API histórica nem redução silenciosa do período para os dias disponíveis.
+
+| Argumento | Comportamento |
+| --- | --- |
+| `--config caminho.json` | Configuração de localidades; padrão empacotado: São Paulo (`sp`) |
+| `--location sp` | Seleciona um ID da configuração; repetível, padrão: todas as localidades |
+| `--start-date YYYY-MM-DD` | Data inicial; padrão: hoje no fuso da localidade |
+| `--end-date YYYY-MM-DD` | Data final inclusiva; padrão: inicial |
+| `--output caminho.csv` | Destino; padrão: `output/open_meteo.csv` ou `output/climatempo.csv` |
+| `--timeout 15` | Timeout por operação de rede, em segundos; não é prazo global |
+| `--attempts 3` | Limite de tentativas HTTP, de 1 a 5 |
+| `--verbose` | Logs detalhados, incluindo stack trace em falhas |
+| `--help` | Ajuda sem executar coleta |
+
+O diretório de saída é criado automaticamente. Cada execução substitui o arquivo
+completo somente após validá-lo; erros preservam a saída anterior. Códigos de saída:
+`0` sucesso, `1` erro de configuração/coleta/validação/gravação, `2` argumentos inválidos
+e `130` interrupção pelo usuário. Logs vão para stderr; o resumo de sucesso, para stdout.
+
+## Localidades configuráveis
+
+O padrão está em `src/weather_rpa/config/locations.json`. Para personalizar, copie-o
+para um JSON local e use `--config`. Estrutura:
+
+```json
+{
+  "locations": [
+    {
+      "location_id": "sp",
+      "name": "São Paulo",
+      "state": "SP",
+      "latitude": -23.55,
+      "longitude": -46.63,
+      "timezone": "America/Sao_Paulo",
+      "climatempo": {"city_code": 558, "slug": "saopaulo-sp"}
+    }
+  ]
+}
+```
+
+Adicione outras localidades à lista, com IDs e dados distintos. `climatempo` é
+opcional para API e obrigatório nas localidades selecionadas para scraping: informe
+o código e slug da página real. Não há geocodificação automática. Coordenadas e
+fuso devem corresponder à cidade; o scraping confere nome e UF exibidos no portal.
+Textos de configuração são aparados e UF é convertida para maiúsculas antes de
+validar o domínio. Campos desconhecidos são rejeitados para detectar erros de digitação.
+
+```bash
+python main.py --api --config minhas_cidades.json --location sp
+```
+
+Para várias cidades, repita `--location` ou omita-o para usar todas. O período é comum
+à execução. Se os fusos tiverem datas locais atuais diferentes, informe as datas
+explicitamente. Uma cidade incompleta ou inválida impede a publicação da coleta inteira.
+
+## Artefatos e arquitetura
+
+Os [CSVs reais de exemplo](output/README.md) são versionados, com nome, UF,
+coordenadas, fuso, data prevista, mínima, máxima, precipitação, fonte e instante da
+coleta. `location_id` é somente interno. Ausência de precipitação vira campo vazio;
+zero significa zero informado. `collected_at` está em UTC; `forecast_date` é a data local.
+
+O exportador grava um temporário, relê e valida o contrato, e só então substitui o
+destino. O descriptor empacotado usa um subconjunto de Table Schema; o validador é
+específico do projeto, sem implementar a especificação completa.
+
+Arquitetura hexagonal: domínio independente, portas estruturais, caso de uso
+compartilhado, adaptadores e handlers de composição. Implementação original a partir
+do desafio; outros projetos foram consultados somente como referências conceituais.
+
+- [Arquitetura e política de falhas](docs/architecture.md)
+- [Contrato dos dados e validação CSV](docs/data-contract.md)
+- [Open-Meteo: unidades, retentativas e restrições de fuso](docs/open-meteo.md)
+- [Climatempo: seletores, extração e limitações](docs/climatempo.md)
+
+## Testes e CI
+
+```bash
 python -m unittest discover -s tests -v
 ```
 
-## Integração contínua
+A suíte usa objetos falsos, HTTP simulado, HTML sintético e diretórios temporários.
+Não consulta serviços externos. Cobre domínio, configuração, orquestração, transporte,
+normalização, parsing, CLI, exportação e validação. Verificações online são separadas:
+passar nos testes não comprova disponibilidade da fonte ou compatibilidade do layout atual.
 
-O workflow `.github/workflows/ci.yml` executa os testes unitários em cada push,
-pull request e acionamento manual pelo GitHub Actions. A matriz cobre Python
-3.11 e 3.12 no Ubuntu e Windows, incluindo a dependência de fusos do Windows.
+O GitHub Actions executa instalação e testes em push, PR e acionamento manual, com
+Python 3.11/3.12 em Ubuntu e Windows. Configuração em `.github/workflows/ci.yml`.
+Tornar os checks obrigatórios depende da proteção de branch configurada no GitHub.
 
-Cada job instala o projeto com `python -m pip install .` e executa
-`python -m unittest discover -s tests -v`. A instalação requer acesso ao índice
-de pacotes; os testes não consultam sites ou APIs. Falhas de instalação ou testes
-fazem o job falhar. Execuções anteriores do mesmo evento e referência são
-canceladas quando uma nova execução começa.
+## Fontes
 
-O workflow publica o resultado das verificações. Torná-las obrigatórias para
-merge depende da configuração de proteção da branch no GitHub.
-
-## Exportação e validação de CSV
-
-`CsvForecastExporter.export(forecasts, destination)` recebe um iterável de
-`DailyForecast`, grava UTF-8 com cabeçalho e retorna o total de registros. O diretório
-pai deve existir. A exportação relê e valida um arquivo temporário no mesmo diretório
-antes de substituir o destino. Falhas de entrada, validação ou publicação preservam
-um arquivo anterior e removem o temporário.
-
-`CsvArtifactValidator.validate(path)` também pode validar um CSV já existente.
-Conteúdo inválido gera `ArtifactValidationError`; erros de acesso continuam sendo
-`OSError`. Arquivo vazio, somente cabeçalho e duplicidades são rejeitados.
-
-O schema empacotado em `src/weather_rpa/schemas/daily_forecast.schema.json` usa um
-subconjunto de [Table Schema](https://specs.frictionlessdata.io/table-schema/).
-O validador é específico deste contrato, não implementa a especificação completa.
-Confira o [contrato e exemplo de uso](docs/data-contract.md).
-
-## Caso de uso compartilhado
-
-`CollectWeather` recebe um coletor e um exportador pelas portas da aplicação.
-Verifica a cobertura completa por cidade e dia antes de exportar uma única vez.
-API e scraping usarão o mesmo fluxo, mudando apenas o coletor injetado.
-
-O exportador CSV aceita um `ForecastArtifactValidator`, mantendo o validador atual
-como padrão. Veja os contratos, a política de falhas e a composição em
-[arquitetura](docs/architecture.md).
-
-## Open-Meteo
-
-O adaptador consulta mínima, máxima e precipitação diária com unidades e fuso
-explícitos, normaliza os registros e reutiliza o caso de uso e exportador existentes.
-Possui timeout, retentativas limitadas e respeito a `Retry-After`. Os testes simulam
-HTTP e não dependem da disponibilidade da API. Veja [uso e limitações](docs/open-meteo.md).
-
-Dados por [Open-Meteo](https://open-meteo.com/), sob CC BY 4.0, normalizados para o
-contrato deste projeto. Consulte os [termos](https://open-meteo.com/en/terms) antes
-de usar o serviço em outros contextos.
-
-## Scraping Climatempo
-
-O adaptador usa HTTP e BeautifulSoup na página de 15 dias, com seletores separados
-da extração e normalização. Cruza as datas completas do calendário com os cards
-diários e confere cidade e UF antes de aceitar os valores. Não usa dados horários
-ou probabilidade de chuva como acumulado diário.
-
-Veja [configuração, uso e limitações](docs/climatempo.md). Os testes usam HTML
-sintético local, sem depender da disponibilidade ou do layout atual do site.
-
-## Decisões
-
-- O domínio usa modelos imutáveis e não conhece HTTP, HTML ou CSV.
-- `Location` é um objeto de valor, sem cadastro ou persistência separada.
-- `location_id` serve à correlação interna, inclusive em execuções com várias cidades.
-- O CSV exporta nome, UF, coordenadas e fuso; não exporta `location_id` e não
-  dependerá de um cadastro externo para identificar a localidade.
-- `collected_at` deve ter fuso e é normalizado para UTC.
-- `forecast_date` representa o dia civil no fuso IANA da localidade.
-- Precipitação é acumulado diário em mm; ausência e zero são distintos.
-- Valores inválidos geram `ValueError`; não são substituídos silenciosamente.
-- Identificadores específicos dos provedores ficarão nos adaptadores.
-
-O [contrato dos dados](docs/data-contract.md) define os campos e as próximas
-etapas de validação. Os CSVs de entrega serão versionados; `output/` não é ignorado.
-A escolha do Climatempo não confirma autorização de redistribuição de seus dados.
-
-## Próximos PRs
-
-1. CLI, handlers e exemplos reais de saída.
-
-Cada etapa inclui testes determinísticos. Transporte, seletores e interpretação
-do HTML serão separados. Verificações online serão independentes da suíte unitária.
+Dados por [Open-Meteo](https://open-meteo.com/), sob CC BY 4.0, com nomes e campos
+normalizados para este contrato. O serviço aberto tem limites e é destinado a uso
+não comercial; consulte os [termos](https://open-meteo.com/en/terms).
+Scraping: [Climatempo](https://www.climatempo.com.br/). As fontes têm modelos,
+horários de atualização e limitações distintos; seus valores não precisam coincidir.
