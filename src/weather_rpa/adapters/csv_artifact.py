@@ -11,6 +11,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from weather_rpa.domain import DailyForecast, Location, WeatherSource
+from weather_rpa.application.ports import ForecastArtifactValidator
 
 
 class ArtifactValidationError(ValueError):
@@ -129,6 +130,9 @@ class CsvArtifactValidator:
 class CsvForecastExporter:
     """Publica somente CSVs validados, preservando o destino em caso de falha."""
 
+    def __init__(self, validator: ForecastArtifactValidator | None = None):
+        self._validator = CsvArtifactValidator() if validator is None else validator
+
     def export(self, forecasts: Iterable[DailyForecast], destination: str | Path) -> int:
         """Grava, relê e valida antes de substituir o destino; retorna o total.
 
@@ -164,7 +168,7 @@ class CsvForecastExporter:
                         "source": forecast.source.value,
                         "collected_at": forecast.collected_at.isoformat(),
                     })
-            count = CsvArtifactValidator().validate(temporary)
+            count = self._validator.validate(temporary)
             temporary.replace(destination)
             return count
         finally:
