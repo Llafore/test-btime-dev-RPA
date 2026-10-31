@@ -9,7 +9,8 @@ contrato do desafio; referências externas são usadas apenas para estudo concei
 Estão implementados o domínio, a exportação CSV e a validação do artefato relido
 do disco, com contrato tabular versionado e testes unitários. Também estão disponíveis
 as portas e o caso de uso compartilhado para múltiplas localidades e período explícito.
-Ainda não há coletores concretos ou CLI implementados.
+O coletor Open-Meteo está implementado. O coletor de scraping e a CLI ainda estão
+pendentes.
 Não é necessário acesso à internet para executar os testes.
 
 ## Ambiente
@@ -83,6 +84,17 @@ O exportador CSV aceita um `ForecastArtifactValidator`, mantendo o validador atu
 como padrão. Veja os contratos, a política de falhas e a composição em
 [arquitetura](docs/architecture.md).
 
+## Open-Meteo
+
+O adaptador consulta mínima, máxima e precipitação diária com unidades e fuso
+explícitos, normaliza os registros e reutiliza o caso de uso e exportador existentes.
+Possui timeout, retentativas limitadas e respeito a `Retry-After`. Os testes simulam
+HTTP e não dependem da disponibilidade da API. Veja [uso e limitações](docs/open-meteo.md).
+
+Dados por [Open-Meteo](https://open-meteo.com/), sob CC BY 4.0, normalizados para o
+contrato deste projeto. Consulte os [termos](https://open-meteo.com/en/terms) antes
+de usar o serviço em outros contextos.
+
 ## Decisões
 
 - O domínio usa modelos imutáveis e não conhece HTTP, HTML ou CSV.
@@ -102,9 +114,8 @@ A escolha do Climatempo não confirma autorização de redistribuição de seus 
 
 ## Próximos PRs
 
-1. Adaptador Open-Meteo.
-2. Adaptador Climatempo, começando com HTTP e BeautifulSoup.
-3. CLI, handlers e exemplos reais de saída.
+1. Adaptador Climatempo, começando com HTTP e BeautifulSoup.
+2. CLI, handlers e exemplos reais de saída.
 
 Cada etapa inclui testes determinísticos. Transporte, seletores e interpretação
 do HTML serão separados. Verificações online serão independentes da suíte unitária.
