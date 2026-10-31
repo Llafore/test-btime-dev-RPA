@@ -7,8 +7,9 @@ contrato do desafio; referências externas são usadas apenas para estudo concei
 ## Estado desta etapa
 
 Estão implementados o domínio, a exportação CSV e a validação do artefato relido
-do disco, com contrato tabular versionado e testes unitários.
-Ainda não há coletores, CLI ou caso de uso de coleta implementados.
+do disco, com contrato tabular versionado e testes unitários. Também estão disponíveis
+as portas e o caso de uso compartilhado para múltiplas localidades e período explícito.
+Ainda não há coletores concretos ou CLI implementados.
 Não é necessário acesso à internet para executar os testes.
 
 ## Ambiente
@@ -72,6 +73,16 @@ subconjunto de [Table Schema](https://specs.frictionlessdata.io/table-schema/).
 O validador é específico deste contrato, não implementa a especificação completa.
 Confira o [contrato e exemplo de uso](docs/data-contract.md).
 
+## Caso de uso compartilhado
+
+`CollectWeather` recebe um coletor e um exportador pelas portas da aplicação.
+Verifica a cobertura completa por cidade e dia antes de exportar uma única vez.
+API e scraping usarão o mesmo fluxo, mudando apenas o coletor injetado.
+
+O exportador CSV aceita um `ForecastArtifactValidator`, mantendo o validador atual
+como padrão. Veja os contratos, a política de falhas e a composição em
+[arquitetura](docs/architecture.md).
+
 ## Decisões
 
 - O domínio usa modelos imutáveis e não conhece HTTP, HTML ou CSV.
@@ -91,10 +102,9 @@ A escolha do Climatempo não confirma autorização de redistribuição de seus 
 
 ## Próximos PRs
 
-1. Portas e caso de uso compartilhado.
-2. Adaptador Open-Meteo.
-3. Adaptador Climatempo, começando com HTTP e BeautifulSoup.
-4. CLI, handlers e exemplos reais de saída.
+1. Adaptador Open-Meteo.
+2. Adaptador Climatempo, começando com HTTP e BeautifulSoup.
+3. CLI, handlers e exemplos reais de saída.
 
 Cada etapa inclui testes determinísticos. Transporte, seletores e interpretação
 do HTML serão separados. Verificações online serão independentes da suíte unitária.
