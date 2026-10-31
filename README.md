@@ -39,6 +39,21 @@ $env:PYTHONPATH = 'src'
 python -m unittest discover -s tests -v
 ```
 
+## Integração contínua
+
+O workflow `.github/workflows/ci.yml` executa os testes unitários em cada push,
+pull request e acionamento manual pelo GitHub Actions. A matriz cobre Python
+3.11 e 3.12 no Ubuntu e Windows, incluindo a dependência de fusos do Windows.
+
+Cada job instala o projeto com `python -m pip install .` e executa
+`python -m unittest discover -s tests -v`. A instalação requer acesso ao índice
+de pacotes; os testes não consultam sites ou APIs. Falhas de instalação ou testes
+fazem o job falhar. Execuções anteriores do mesmo evento e referência são
+canceladas quando uma nova execução começa.
+
+O workflow publica o resultado das verificações. Torná-las obrigatórias para
+merge depende da configuração de proteção da branch no GitHub.
+
 ## Decisões
 
 - O domínio usa modelos imutáveis e não conhece HTTP, HTML ou CSV.
