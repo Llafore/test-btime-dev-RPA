@@ -1,0 +1,2 @@
+location_name,state,latitude,longitude,forecast_date,timezone,temperature_min_c,temperature_max_c,precipitation_mm,source,collected_at
+São Paulo,SP,-23.55,-46.63,2026-10-31,America/Sao_Paulo,15.5,26.1,1.8,open_meteo,2026-10-31T21:31:42.603226+00:00

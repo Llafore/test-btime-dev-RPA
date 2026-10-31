@@ -1,0 +1,13 @@
+{
+  "locations": [
+    {
+      "location_id": "sp",
+      "name": "São Paulo",
+      "state": "SP",
+      "latitude": -23.55,
+      "longitude": -46.63,
+      "timezone": "America/Sao_Paulo",
+      "climatempo": {"city_code": 558, "slug": "saopaulo-sp"}
+    }
+  ]
+}

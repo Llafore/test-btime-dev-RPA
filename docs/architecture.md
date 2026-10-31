@@ -30,8 +30,8 @@ repete a validação após a publicação, pois isso detectaria erros tarde dema
 - Datas explícitas, incluindo início e fim. Nenhuma data é inferida do relógio.
 - Um destino cujo diretório pai já existe.
 
-Cada execução usa um único coletor/fonte. Os futuros handlers de API e scraping
-selecionarão o adaptador e reutilizarão o mesmo caso de uso. Não há fallback automático
+Cada execução usa um único coletor/fonte. Os handlers de API e scraping
+selecionam o adaptador e reutilizam o mesmo caso de uso. Não há fallback automático
 entre fontes nem interseção silenciosa de períodos disponíveis.
 
 Antes de coletar, a aplicação rejeita datas inválidas/invertidas e localidades com
@@ -58,12 +58,11 @@ O retorno `CollectionResult` contém `destination` (`Path`), `record_count` e
 - Erros de transporte, leitura de iteráveis, validação e armazenamento: propagados.
 
 O caso de uso emite logs de início e publicação pelo logging padrão, sem configurar
-handlers globais. O futuro ponto de entrada será responsável por configurar logs e
-converter falhas em mensagens e códigos de saída.
+handlers globais. A CLI configura logs e converte falhas em mensagens e códigos de saída.
 
 ## Composição
 
-Depois de implementar um coletor concreto, a composição será:
+Os handlers compõem os coletores concretos com o caso de uso e o exportador:
 
 ```python
 from weather_rpa.application import CollectWeather
@@ -74,6 +73,9 @@ use_case = CollectWeather(collector=collector, exporter=exporter)
 result = use_case.execute(locations, start_date, end_date, destination)
 ```
 
-`collector`, localidades, datas e destino serão fornecidos pelo handler. Esta etapa
-não implementa os coletores ou CLI. Os testes usam coletores/exportadores falsos e
-arquivos temporários para verificar a integração local com CSV, sem chamadas externas.
+`collector`, localidades, datas e destino são fornecidos pelos handlers e pela CLI.
+A configuração padrão é empacotada e pode ser substituída por um JSON local.
+`main.py`, `collect_api.py`, `collect_scraping.py`, a execução por módulo e os comandos
+instalados convergem para a mesma CLI, sem duplicar as regras do caso de uso.
+Os testes usam coletores/exportadores falsos e arquivos temporários para verificar
+a integração local com CSV, sem chamadas externas.
